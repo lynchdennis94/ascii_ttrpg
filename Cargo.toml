@@ -1,0 +1,11 @@
+[package]
+name = "ascii_ttrpg"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+rltk = { version = "0.8.1" } # Wrapper for bracket-lib, using this for tutorial compatibility
+specs = { version = "0.17.0" }
+specs-derive = { version = "0.4.1" }
