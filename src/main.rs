@@ -2,6 +2,7 @@ mod components;
 mod map;
 mod player;
 mod rect;
+mod visibility_system;
 
 pub use components::*;
 pub use map::*;
@@ -11,6 +12,7 @@ use rltk::{GameState, Rltk, VirtualKeyCode, RGB};
 use specs::prelude::*;
 use specs_derive::Component;
 use std::cmp::{max, min};
+pub use visibility_system::*;
 
 pub struct State {
     ecs: World,
@@ -30,8 +32,7 @@ impl GameState for State {
         let positions = self.ecs.read_storage::<Position>();
         let renderables = self.ecs.read_storage::<Renderable>();
 
-        let map = self.ecs.fetch::<Map>();
-        draw_map(&map.tiles, ctx);
+        draw_map(&self.ecs, ctx);
         for (pos, render) in (&positions, &renderables).join() {
             ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph);
         }
@@ -39,7 +40,11 @@ impl GameState for State {
 }
 
 impl State {
-    fn run_systems(&mut self) {}
+    fn run_systems(&mut self) {
+        let mut vis = VisibilitySystem {};
+        vis.run_now(&self.ecs);
+        self.ecs.maintain();
+    }
 }
 
 fn main() -> rltk::BError {
@@ -53,6 +58,7 @@ fn main() -> rltk::BError {
     gs.ecs.register::<Position>();
     gs.ecs.register::<Renderable>();
     gs.ecs.register::<Player>();
+    gs.ecs.register::<Viewshed>();
 
     // A map
     let map = Map::new_map_rooms_and_corridors();
@@ -72,6 +78,11 @@ fn main() -> rltk::BError {
             bg: RGB::named(rltk::BLACK),
         })
         .with(Player {})
+        .with(Viewshed {
+            visible_tiles: Vec::new(),
+            range: 8,
+            dirty: true
+        })
         .build();
 
     rltk::main_loop(context, gs)
