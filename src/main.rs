@@ -1,10 +1,12 @@
-mod map;
 mod components;
+mod map;
 mod player;
+mod rect;
 
-pub use map::*;
 pub use components::*;
+pub use map::*;
 pub use player::*;
+pub use rect::*;
 use rltk::{GameState, Rltk, VirtualKeyCode, RGB};
 use specs::prelude::*;
 use specs_derive::Component;
@@ -37,9 +39,7 @@ impl GameState for State {
 }
 
 impl State {
-    fn run_systems(&mut self) {
-
-    }
+    fn run_systems(&mut self) {}
 }
 
 fn main() -> rltk::BError {
@@ -54,19 +54,25 @@ fn main() -> rltk::BError {
     gs.ecs.register::<Renderable>();
     gs.ecs.register::<Player>();
 
+    // A map
+    let (rooms, map) = new_map_rooms_and_corridors();
+    gs.ecs.insert(map);
+    let (player_x, player_y) = rooms[0].center();
+
     // Player entity
     gs.ecs
         .create_entity()
-        .with(Position { x: 40, y: 25 })
+        .with(Position {
+            x: player_x,
+            y: player_y,
+        })
         .with(Renderable {
             glyph: rltk::to_cp437('@'),
             fg: RGB::named(rltk::YELLOW),
             bg: RGB::named(rltk::BLACK),
         })
-        .with(Player{})
+        .with(Player {})
         .build();
 
-    // A map
-    gs.ecs.insert(new_map());
     rltk::main_loop(context, gs)
 }
